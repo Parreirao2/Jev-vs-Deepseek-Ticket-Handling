@@ -1,0 +1,9 @@
+{
+  "name": "jev-live-triage",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js",
+    "generate-tickets": "node scripts/generate-tickets.js"
+  }
+}

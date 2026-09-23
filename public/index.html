@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jev Live Triage</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div>
+        <h1>Jev Live Triage</h1>
+        <p class="subtitle" id="scenario-description">A decision-only model triaging a queue in real time</p>
+      </div>
+      <button type="button" class="secondary-btn" id="settings-toggle-btn">Settings</button>
+    </div>
+  </header>
+
+  <div class="drawer-overlay" id="drawer-overlay" hidden></div>
+  <aside class="settings-drawer" id="settings-drawer" hidden>
+    <div class="drawer-header">
+      <h2>Settings</h2>
+      <button type="button" class="modal-close" id="drawer-close-btn" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="drawer-section">
+      <h3>Scenario</h3>
+      <div class="scenario-switcher" id="scenario-switcher"></div>
+    </div>
+
+    <div class="drawer-section">
+      <h3>Reply templates <span id="actions-count" class="inflight-count"></span></h3>
+      <div class="actions-list" id="actions-list"></div>
+      <form id="add-action-form" class="add-action-form">
+        <input type="text" id="action-label" placeholder="Name (e.g. Free coupon)" required />
+        <textarea id="action-criteria" placeholder="When should Jev use this template?" rows="2" required></textarea>
+        <textarea id="action-body" placeholder="Reply text to send to the customer..." rows="2" required></textarea>
+        <button type="submit" id="add-action-submit">Add template</button>
+      </form>
+      <div id="add-action-error" class="live-error" hidden></div>
+    </div>
+  </aside>
+
+  <section class="classify-panel">
+    <h2>Classify</h2>
+    <form id="live-form">
+      <textarea id="live-input" placeholder="..." rows="2"></textarea>
+      <div class="classify-controls">
+        <label class="switch-toggle">
+          <input type="checkbox" id="live-race-toggle" />
+          <span>Also race DeepSeek V4.1 Flash</span>
+        </label>
+        <button type="submit" id="live-submit">Classify</button>
+      </div>
+      <div class="race-options" id="live-race-options" hidden>
+        <label><input type="checkbox" id="live-race-reasoning" /> extended reasoning</label>
+        <label><input type="checkbox" id="live-race-concise" checked /> concise answer only</label>
+      </div>
+    </form>
+
+    <div class="result-lanes" id="live-result-lanes" hidden>
+      <div class="result-lane" id="live-jev-lane">
+        <div class="result-lane-header">
+          <span class="result-lane-name">Jev</span>
+          <span class="result-lane-time" id="live-latency-value">--</span>
+        </div>
+        <div class="live-badges">
+          <span id="live-category" class="badge"></span>
+          <div class="severity-bar"><div id="live-severity-fill" class="severity-fill"></div></div>
+          <span id="live-severity-label" class="severity-label"></span>
+          <span id="live-human" class="badge human-badge" hidden>needs human</span>
+          <span id="live-status" class="badge status-badge"></span>
+        </div>
+        <div class="live-meta-row">
+          <span id="live-agent" class="tag agent-tag"></span>
+          <span id="live-sla" class="tag sla-tag"></span>
+        </div>
+        <div class="live-action">
+          <div class="live-action-label" id="live-action-label"></div>
+          <div class="live-action-body" id="live-action-body"></div>
+        </div>
+      </div>
+      <div class="result-lane result-lane-deepseek" id="live-deepseek-lane" hidden>
+        <div class="result-lane-header">
+          <span class="result-lane-name">DeepSeek V4.1 Flash</span>
+          <span class="result-lane-time" id="live-ds-time">--</span>
+        </div>
+        <div class="live-badges">
+          <span id="live-ds-category" class="badge" hidden></span>
+          <span id="live-ds-agree" class="badge" hidden></span>
+        </div>
+        <div class="live-ds-answer" id="live-ds-answer">Waiting...</div>
+        <div class="live-meta-row" id="live-ds-stats" hidden>
+          <span class="tag" id="live-ds-speed-tag"></span>
+        </div>
+      </div>
+    </div>
+    <div id="live-error" class="live-error" hidden></div>
+  </section>
+
+  <section class="batch-panel">
+    <div class="batch-header">
+      <button id="start-btn">Start Triage</button>
+      <button id="new-batch-btn" class="secondary-btn">New Batch</button>
+      <label class="switch-toggle">
+        <input type="checkbox" id="batch-race-toggle" />
+        <span>Race DeepSeek on a sample</span>
+      </label>
+    </div>
+    <div class="race-options" id="batch-race-options" hidden>
+      <label><input type="checkbox" id="batch-race-reasoning" /> extended reasoning</label>
+      <label><input type="checkbox" id="batch-race-concise" checked /> concise answer only</label>
+      <span class="race-options-note">~18 tickets, several minutes</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-value" id="stat-processed">0/0</span><span class="stat-label">processed</span></div>
+      <div class="stat"><span class="stat-value" id="stat-elapsed">0.0s</span><span class="stat-label">elapsed</span></div>
+      <div class="stat"><span class="stat-value" id="stat-throughput">0.0/s</span><span class="stat-label">throughput</span></div>
+      <div class="stat"><span class="stat-value" id="stat-avg-latency">-- ms</span><span class="stat-label">avg latency</span></div>
+      <div class="stat"><span class="stat-value" id="stat-cost">$0.0000</span><span class="stat-label">est. cost</span></div>
+      <div class="stat"><span class="stat-value" id="stat-auto">0/0</span><span class="stat-label">auto-resolved</span></div>
+      <div class="stat" id="stat-ds-wrap" hidden><span class="stat-value" id="stat-ds-progress">0/0</span><span class="stat-label">DeepSeek race</span></div>
+      <div class="stat" id="stat-ds-agree-wrap" hidden><span class="stat-value" id="stat-ds-agreement">--</span><span class="stat-label">DeepSeek agreement</span></div>
+    </div>
+    <div class="queue-panel">
+      <h3>Queue <span id="queue-count" class="inflight-count"></span></h3>
+      <div class="queue-list" id="queue"></div>
+    </div>
+    <div class="inflight-panel">
+      <h3>Classifying now <span id="inflight-count" class="inflight-count"></span></h3>
+      <div class="inflight-grid" id="inflight"></div>
+    </div>
+    <div class="board" id="board"></div>
+    <div id="errors" class="errors" hidden></div>
+  </section>
+
+  <div class="toast-stack" id="toast-stack"></div>
+
+  <div class="modal-overlay" id="detail-modal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      <div class="modal-text" id="modal-text"></div>
+      <div class="live-badges" id="modal-badges">
+        <span id="modal-category" class="badge"></span>
+        <div class="severity-bar"><div id="modal-severity-fill" class="severity-fill"></div></div>
+        <span id="modal-severity-label" class="severity-label"></span>
+        <span id="modal-human" class="badge human-badge" hidden>needs human</span>
+        <span id="modal-status" class="badge status-badge"></span>
+        <span id="modal-latency" class="latency-badge"></span>
+      </div>
+      <div class="live-meta-row" id="modal-meta-row">
+        <span id="modal-agent" class="tag agent-tag"></span>
+        <span id="modal-sla" class="tag sla-tag"></span>
+      </div>
+      <div class="live-action" id="modal-action-block">
+        <div class="live-action-label" id="modal-action-label"></div>
+        <div class="live-action-body" id="modal-action-body"></div>
+      </div>
+      <div class="confidence-block" id="modal-confidence-block">
+        <div class="confidence-title">Why this decision</div>
+        <div class="confidence-rows" id="modal-confidence-rows"></div>
+      </div>
+      <div class="confidence-block" id="modal-deepseek-compare" hidden>
+        <div class="confidence-title">DeepSeek V4.1 Flash comparison</div>
+        <div class="live-badges">
+          <span id="modal-ds-category" class="badge" hidden></span>
+          <span id="modal-ds-agree" class="badge" hidden></span>
+        </div>
+        <div id="modal-deepseek-text"></div>
+        <div class="live-meta-row" id="modal-ds-stats" hidden>
+          <span class="tag" id="modal-ds-speed-tag"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

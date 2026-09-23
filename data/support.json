@@ -1,0 +1,602 @@
+[
+  {
+    "text": "Hi, Maria here. I'm writing a comparison article, can I ask about a partnership?.",
+    "id": 1
+  },
+  {
+    "text": "Hi, Priya here. my replacement item arrived damaged, the box was crushed.",
+    "id": 2
+  },
+  {
+    "text": "Hi, Hannah here. I need a refund for my subscription, it was a mistake.",
+    "id": 3
+  },
+  {
+    "text": "Hi, Nina here. I never got the verification code for my password.",
+    "id": 4
+  },
+  {
+    "text": "Hi, Grace here. I'm writing a comparison article, can I ask about the enterprise plan?.",
+    "id": 5
+  },
+  {
+    "text": "Please help ASAP - Hi, Maria here. Can you explain the extra line item on my invoice?. This is the third time I've reported this.",
+    "id": 6
+  },
+  {
+    "text": "Please help ASAP - Hi, Yuki here. I want to delete two-factor authentication and all my data permanently.",
+    "id": 7
+  },
+  {
+    "text": "Hi, Liam here. I can't get the sync feature to load at all, just a blank screen.",
+    "id": 8
+  },
+  {
+    "text": "Hi, Maria here. I'm writing a comparison article, can I ask about your API docs?.",
+    "id": 9
+  },
+  {
+    "text": "Hi, Hannah here. I never got the verification code for my email on file.",
+    "id": 10
+  },
+  {
+    "text": "Hi, Alex here. I never got the verification code for my username.",
+    "id": 11
+  },
+  {
+    "text": "Hi, Marco here. My card was declined but you still charged me for my invoice.",
+    "id": 12
+  },
+  {
+    "text": "Hi, Maria here. Someone else seems to have access to my password.",
+    "id": 13
+  },
+  {
+    "text": "URGENT: Hi, Grace here. Can someone walk me through your API docs?.",
+    "id": 14
+  },
+  {
+    "text": "Hi, Marco here. I can't find a receipt for the annual plan.",
+    "id": 15
+  },
+  {
+    "text": "Hi, Alex here. Can you speed up order #63623? I need it by Friday.",
+    "id": 16
+  },
+  {
+    "text": "Hi, Yuki here. I need to change my password but the form keeps failing. Appreciate it in advance.",
+    "id": 17
+  },
+  {
+    "text": "Hi, Maria here. Can you speed up order #55191? I need it by Friday.",
+    "id": 18
+  },
+  {
+    "text": "Hi, Nina here. I want to delete my email on file and all my data permanently.",
+    "id": 19
+  },
+  {
+    "text": "Hi, Elena here. I need a refund for the annual plan, it was a mistake.",
+    "id": 20
+  },
+  {
+    "text": "¿Tienen planes para empresas grandes?",
+    "id": 21
+  },
+  {
+    "text": "Hi, Chen here. Are you hiring? I saw a role related to the onboarding call.",
+    "id": 22
+  },
+  {
+    "text": "??",
+    "id": 23
+  },
+  {
+    "text": "Hi, Noah here. I can't get the export feature to load at all, just a blank screen.",
+    "id": 24
+  },
+  {
+    "text": "Hi, Priya here. I'm being billed in the wrong currency for the Pro plan. Thanks so much for your help!",
+    "id": 25
+  },
+  {
+    "text": "Hi, Fatima here. I still haven't received the package after 3 weeks. Thanks so much for your help!",
+    "id": 26
+  },
+  {
+    "text": "Hi, Priya here. Getting error code E-4471 on the dashboard.",
+    "id": 27
+  },
+  {
+    "text": "URGENT: Hi, Diego here. I'm locked out of two-factor authentication and the reset link isn't working.",
+    "id": 28
+  },
+  {
+    "text": "Hi, Maria here. I'd like to ask about your API docs before I commit.",
+    "id": 29
+  },
+  {
+    "text": "Hi, Yuki here. I need a refund for my invoice, it was a mistake.",
+    "id": 30
+  },
+  {
+    "text": "Hi, Diego here. I'm writing a comparison article, can I ask about the enterprise plan?.",
+    "id": 31
+  },
+  {
+    "text": "Hi, Marco here. Can someone walk me through the enterprise plan?.",
+    "id": 32
+  },
+  {
+    "text": "Hi, Diego here. Can you speed up order #92740? I need it by Friday.",
+    "id": 33
+  },
+  {
+    "text": "Fui cobrado duas vezes pela mensalidade, podem verificar?",
+    "id": 34
+  },
+  {
+    "text": "Não consigo aceder ao painel, aparece uma página em branco.",
+    "id": 35
+  },
+  {
+    "text": "Hi, Liam here. I'd like to ask about a partnership before I commit.",
+    "id": 36
+  },
+  {
+    "text": "Hi, Diego here. I sent order #62255 back two weeks ago, still no refund.",
+    "id": 37
+  },
+  {
+    "text": "Hi, Elena here. I'm being billed in the wrong currency for the annual plan.",
+    "id": 38
+  },
+  {
+    "text": "Still waiting on this...",
+    "id": 39
+  },
+  {
+    "text": "La aplicación se congela cada vez que intento subir un archivo.",
+    "id": 40
+  },
+  {
+    "text": "Hi, Priya here. my exchange arrived damaged, the box was crushed.",
+    "id": 41
+  },
+  {
+    "text": "Hi, Yuki here. I'm locked out of my account and the reset link isn't working. No rush, whenever you get a chance.",
+    "id": 42
+  },
+  {
+    "text": "Hi, Marco here. the API is running extremely slowly today.",
+    "id": 43
+  },
+  {
+    "text": "Hi, Diego here. The price for the Pro plan changed without any notice.",
+    "id": 44
+  },
+  {
+    "text": "Hi, Elena here. I can't get the API to load at all, just a blank screen.",
+    "id": 45
+  },
+  {
+    "text": "Hi, Fatima here. I want to delete two-factor authentication and all my data permanently.",
+    "id": 46
+  },
+  {
+    "text": "Hi, Sam here. order #33880 was marked delivered but never arrived.",
+    "id": 47
+  },
+  {
+    "text": "Hi, Ines here. Can you merge two accounts under my account?. Thanks so much for your help!",
+    "id": 48
+  },
+  {
+    "text": "A fatura deste mês tem um valor estranho que não reconheço.",
+    "id": 49
+  },
+  {
+    "text": "Hi, Ines here. What are your hours for support on the enterprise plan?.",
+    "id": 50
+  },
+  {
+    "text": "Hi, Alex here. I need to change my email on file but the form keeps failing.",
+    "id": 51
+  },
+  {
+    "text": "Vocês têm desconto para estudantes?",
+    "id": 52
+  },
+  {
+    "text": "Hi, Grace here. Uploading a file to the export feature fails every time.",
+    "id": 53
+  },
+  {
+    "text": "Hi, Sam here. My card was declined but you still charged me for the Pro plan.",
+    "id": 54
+  },
+  {
+    "text": "A minha encomenda ainda não chegou e já passaram duas semanas.",
+    "id": 55
+  },
+  {
+    "text": "Please help ASAP - Hi, Fatima here. I'm locked out of my password and the reset link isn't working.",
+    "id": 56
+  },
+  {
+    "text": "Hi, Chen here. Can you speed up order #52143? I need it by Friday. Thanks so much for your help!",
+    "id": 57
+  },
+  {
+    "text": "Hi, Jordan here. I need to change two-factor authentication but the form keeps failing. Appreciate it in advance.",
+    "id": 58
+  },
+  {
+    "text": "Please help ASAP - Hi, Grace here. my last payment renewed but I cancelled it last month.",
+    "id": 59
+  },
+  {
+    "text": "Mi pedido llegó incompleto, faltaba un artículo.",
+    "id": 60
+  },
+  {
+    "text": "Hi, Alex here. Uploading a file to the mobile app fails every time.",
+    "id": 61
+  },
+  {
+    "text": "Hi, Priya here. I want to delete two-factor authentication and all my data permanently.",
+    "id": 62
+  },
+  {
+    "text": "Hi, Elena here. Someone else seems to have access to my password.",
+    "id": 63
+  },
+  {
+    "text": "URGENTE: o sistema caiu completamente, não conseguimos trabalhar.",
+    "id": 64
+  },
+  {
+    "text": "Hi, Maria here. Can someone walk me through your API docs?.",
+    "id": 65
+  },
+  {
+    "text": "Hi, Jordan here. Can you explain the extra line item on my last payment?.",
+    "id": 66
+  },
+  {
+    "text": "Hi, Noah here. the package came with the wrong item inside. Thanks so much for your help!",
+    "id": 67
+  },
+  {
+    "text": "Hi, Fatima here. the dashboard is running extremely slowly today.",
+    "id": 68
+  },
+  {
+    "text": "Hi, Jordan here. Are you hiring? I saw a role related to the onboarding call. No rush, whenever you get a chance.",
+    "id": 69
+  },
+  {
+    "text": "Alguém tentou aceder à minha conta, podem verificar a segurança?",
+    "id": 70
+  },
+  {
+    "text": "This is time-sensitive: Hi, Sam here. Can someone walk me through the onboarding call?. I'm honestly about to cancel if this isn't fixed today.",
+    "id": 71
+  },
+  {
+    "text": "This is time-sensitive: Hi, Liam here. Do you offer student discounts on the onboarding call?. I'm honestly about to cancel if this isn't fixed today.",
+    "id": 72
+  },
+  {
+    "text": "Hi, Maria here. my replacement item shows the wrong tracking number.",
+    "id": 73
+  },
+  {
+    "text": "Hi, Nina here. the sync feature is running extremely slowly today.",
+    "id": 74
+  },
+  {
+    "text": "Só queria agradecer, o suporte foi excelente ontem.",
+    "id": 75
+  },
+  {
+    "text": "Hi, Noah here. I need to change my email on file but the form keeps failing.",
+    "id": 76
+  },
+  {
+    "text": "Hi, Ines here. I was charged twice for my invoice. Completely unacceptable for a paid plan.",
+    "id": 77
+  },
+  {
+    "text": "Hi, Ines here. Uploading a file to the sync feature fails every time.",
+    "id": 78
+  },
+  {
+    "text": "Hi, Yuki here. order #79645 was marked delivered but never arrived.",
+    "id": 79
+  },
+  {
+    "text": "Hi, Grace here. Getting error code E-4471 on the export feature.",
+    "id": 80
+  },
+  {
+    "text": "Hi, Omar here. I can't find a receipt for my invoice.",
+    "id": 81
+  },
+  {
+    "text": "Please help ASAP - Hi, Chen here. Can someone walk me through a partnership?. No rush, whenever you get a chance.",
+    "id": 82
+  },
+  {
+    "text": "Hi, Grace here. Getting error code E-4471 on the export feature. Thanks so much for your help!",
+    "id": 83
+  },
+  {
+    "text": "Hi, Noah here. I can't get the API to load at all, just a blank screen.",
+    "id": 84
+  },
+  {
+    "text": "Necesito cambiar la dirección de envío antes de que salga el paquete.",
+    "id": 85
+  },
+  {
+    "text": "This is time-sensitive: Hi, Yuki here. I need a refund for the Pro plan, it was a mistake.",
+    "id": 86
+  },
+  {
+    "text": "This is time-sensitive: Hi, Fatima here. I need to change the address for my return before it ships. Completely unacceptable for a paid plan.",
+    "id": 87
+  },
+  {
+    "text": "Escalating this - Hi, Fatima here. the sync feature keeps crashing when I try to save.",
+    "id": 88
+  },
+  {
+    "text": "Hi, Diego here. Do you offer student discounts on the enterprise plan?.",
+    "id": 89
+  },
+  {
+    "text": "Hi, Elena here. the package came with the wrong item inside.",
+    "id": 90
+  },
+  {
+    "text": "Preciso de apagar a minha conta e todos os meus dados.",
+    "id": 91
+  },
+  {
+    "text": "Hi, Alex here. the Pro plan renewed but I cancelled it last month.",
+    "id": 92
+  },
+  {
+    "text": "URGENTE: el sitio lleva caído toda la mañana.",
+    "id": 93
+  },
+  {
+    "text": "Me cobraron dos veces la suscripción, necesito un reembolso.",
+    "id": 94
+  },
+  {
+    "text": "Hi, Maria here. Are you hiring? I saw a role related to the onboarding call.",
+    "id": 95
+  },
+  {
+    "text": "Hi, Hannah here. the sync feature won't sync across my devices anymore.",
+    "id": 96
+  },
+  {
+    "text": "Hi, Maria here. The price for the Pro plan changed without any notice.",
+    "id": 97
+  },
+  {
+    "text": "Esqueci-me da password e o link de recuperação não chega ao meu email.",
+    "id": 98
+  },
+  {
+    "text": "O aplicativo está a fechar sozinho sempre que tento guardar.",
+    "id": 99
+  },
+  {
+    "text": "Hi, Priya here. I can't get the login page to load at all, just a blank screen.",
+    "id": 100
+  },
+  {
+    "text": "Hi, Ines here. the sync feature is running extremely slowly today.",
+    "id": 101
+  },
+  {
+    "text": "Hi, Jordan here. I can't find a receipt for my subscription.",
+    "id": 102
+  },
+  {
+    "text": "URGENT: Hi, Jake here. Someone else seems to have access to two-factor authentication.",
+    "id": 103
+  },
+  {
+    "text": "Hi, Elena here. the login page keeps crashing when I try to save. Thanks so much for your help!",
+    "id": 104
+  },
+  {
+    "text": "Hi, Yuki here. Can you merge two accounts under my username?.",
+    "id": 105
+  },
+  {
+    "text": "Hi, Tariq here. Are you hiring? I saw a role related to a partnership. No rush, whenever you get a chance.",
+    "id": 106
+  },
+  {
+    "text": "Escalating this - Hi, Nina here. Can you speed up my replacement item? I need it by Friday.",
+    "id": 107
+  },
+  {
+    "text": "Hi, Elena here. I can't find a receipt for my invoice.",
+    "id": 108
+  },
+  {
+    "text": "Hi, Diego here. I'm writing a comparison article, can I ask about a partnership?.",
+    "id": 109
+  },
+  {
+    "text": "Hi, Noah here. Can you speed up my return? I need it by Friday.",
+    "id": 110
+  },
+  {
+    "text": "Hi, Omar here. the export feature is running extremely slowly today.",
+    "id": 111
+  },
+  {
+    "text": "Hi, Maria here. My card was declined but you still charged me for the Pro plan.",
+    "id": 112
+  },
+  {
+    "text": "Hi, Chen here. the sync feature has been throwing a 500 error since this morning.",
+    "id": 113
+  },
+  {
+    "text": "Hi, Priya here. Can you merge two accounts under two-factor authentication?. No rush, whenever you get a chance.",
+    "id": 114
+  },
+  {
+    "text": "Gracias por la ayuda tan rápida, excelente servicio.",
+    "id": 115
+  },
+  {
+    "text": "Hi, Sam here. Just wanted to say the support on a partnership was great. Appreciate it in advance.",
+    "id": 116
+  },
+  {
+    "text": "Same issue as before I guess",
+    "id": 117
+  },
+  {
+    "text": "Please help ASAP - Hi, Jordan here. Can someone walk me through your pricing page?. This is the third time I've reported this.",
+    "id": 118
+  },
+  {
+    "text": "Hi, Nina here. I still haven't received the package after 3 weeks. No rush, whenever you get a chance.",
+    "id": 119
+  },
+  {
+    "text": "Hi, Maria here. the package arrived damaged, the box was crushed.",
+    "id": 120
+  },
+  {
+    "text": "Hi, Hannah here. my exchange shows the wrong tracking number.",
+    "id": 121
+  },
+  {
+    "text": "Escalating this - Hi, Tariq here. Someone else seems to have access to my username. Thanks so much for your help!",
+    "id": 122
+  },
+  {
+    "text": "Hi, Yuki here. I was charged twice for my subscription.",
+    "id": 123
+  },
+  {
+    "text": "Hi, Hannah here. I need to change the address for my replacement item before it ships.",
+    "id": 124
+  },
+  {
+    "text": "URGENT: Hi, Chen here. Can you merge two accounts under my password?. Completely unacceptable for a paid plan.",
+    "id": 125
+  },
+  {
+    "text": "Escalating this - Hi, Diego here. I need to change the address for my replacement item before it ships. I'm honestly about to cancel if this isn't fixed today.",
+    "id": 126
+  },
+  {
+    "text": "Hi, Tariq here. I still haven't received my replacement item after 3 weeks.",
+    "id": 127
+  },
+  {
+    "text": "It's broken. Please fix.",
+    "id": 128
+  },
+  {
+    "text": "Hi, Liam here. the mobile app keeps crashing when I try to save. No rush, whenever you get a chance.",
+    "id": 129
+  },
+  {
+    "text": "Hi, Yuki here. I'm locked out of my password and the reset link isn't working.",
+    "id": 130
+  },
+  {
+    "text": "Escalating this - Hi, Sam here. Someone else seems to have access to my email on file.",
+    "id": 131
+  },
+  {
+    "text": "Hi, Yuki here. Can someone walk me through your API docs?.",
+    "id": 132
+  },
+  {
+    "text": "Hi, Marco here. I want to delete my username and all my data permanently.",
+    "id": 133
+  },
+  {
+    "text": "Hi, Nina here. Someone else seems to have access to my email on file. No rush, whenever you get a chance.",
+    "id": 134
+  },
+  {
+    "text": "Hi, Noah here. order #26950 came with the wrong item inside.",
+    "id": 135
+  },
+  {
+    "text": "Hi, Elena here. the sync feature is running extremely slowly today.",
+    "id": 136
+  },
+  {
+    "text": "Hi, Jordan here. Can someone walk me through the onboarding call?.",
+    "id": 137
+  },
+  {
+    "text": "Hey, quick question.",
+    "id": 138
+  },
+  {
+    "text": "Not working.",
+    "id": 139
+  },
+  {
+    "text": "Hi, Priya here. the login page keeps crashing when I try to save. Appreciate it in advance.",
+    "id": 140
+  },
+  {
+    "text": "Hi, Fatima here. the mobile app is running extremely slowly today.",
+    "id": 141
+  },
+  {
+    "text": "Any update?",
+    "id": 142
+  },
+  {
+    "text": "Escalating this - Hi, Noah here. my exchange was marked delivered but never arrived.",
+    "id": 143
+  },
+  {
+    "text": "Hi, Alex here. I'm being billed in the wrong currency for my subscription.",
+    "id": 144
+  },
+  {
+    "text": "Hi, Marco here. The price for my subscription changed without any notice.",
+    "id": 145
+  },
+  {
+    "text": "Hi, Yuki here. I'm being billed in the wrong currency for my last payment.",
+    "id": 146
+  },
+  {
+    "text": "O produto veio danificado, a caixa estava toda amassada.",
+    "id": 147
+  },
+  {
+    "text": "No recibí el código de verificación para entrar a mi cuenta.",
+    "id": 148
+  },
+  {
+    "text": "Hi, Jake here. I never got the verification code for my email on file.",
+    "id": 149
+  },
+  {
+    "text": "Hi, Fatima here. I'm writing a comparison article, can I ask about the enterprise plan?.",
+    "id": 150
+  }
+]
