@@ -129,6 +129,32 @@ function maybeEscalate(result) {
   showToast('Critical item escalated', `${to} — "${result.text.slice(0, 60)}${result.text.length > 60 ? '…' : ''}"`);
 }
 
+// ---- API keys (stored per-browser in localStorage; sent only to this app's own server) ----
+
+const JEV_KEY_STORAGE = 'jev_api_key';
+const DS_KEY_STORAGE = 'ds_api_key';
+const jevKeyInput = document.getElementById('jev-api-key');
+const dsKeyInput = document.getElementById('ds-api-key');
+
+try {
+  jevKeyInput.value = localStorage.getItem(JEV_KEY_STORAGE) || '';
+  dsKeyInput.value = localStorage.getItem(DS_KEY_STORAGE) || '';
+} catch {}
+
+jevKeyInput.addEventListener('input', () => {
+  try { localStorage.setItem(JEV_KEY_STORAGE, jevKeyInput.value.trim()); } catch {}
+});
+dsKeyInput.addEventListener('input', () => {
+  try { localStorage.setItem(DS_KEY_STORAGE, dsKeyInput.value.trim()); } catch {}
+});
+
+function getJevKey() {
+  return jevKeyInput.value.trim();
+}
+function getDsKey() {
+  return dsKeyInput.value.trim();
+}
+
 // ---- Settings drawer ----
 
 const settingsToggleBtn = document.getElementById('settings-toggle-btn');
@@ -553,6 +579,8 @@ startBtn.addEventListener('click', () => {
     params.set('reasoning', batchRaceReasoning.checked ? 'on' : 'off');
     params.set('concise', batchRaceConcise.checked ? 'on' : 'off');
   }
+  if (getJevKey()) params.set('jevKey', getJevKey());
+  if (getDsKey()) params.set('dsKey', getDsKey());
   const qs = params.toString();
   const source = new EventSource(`/api/stream${qs ? `?${qs}` : ''}`);
 
@@ -850,7 +878,7 @@ liveForm.addEventListener('submit', async (e) => {
     try {
       const res = await fetch('/api/classify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-jev-key': getJevKey() },
         body: JSON.stringify({ text }),
       });
       const result = await res.json();
@@ -882,6 +910,8 @@ liveForm.addEventListener('submit', async (e) => {
     reasoning: liveRaceReasoning.checked ? 'on' : 'off',
     concise: liveRaceConcise.checked ? 'on' : 'off',
   });
+  if (getJevKey()) params.set('jevKey', getJevKey());
+  if (getDsKey()) params.set('dsKey', getDsKey());
   const source = new EventSource(`/api/race?${params.toString()}`);
   let liveJevResult = null;
 

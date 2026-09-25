@@ -15,11 +15,13 @@ const DEEPSEEK_MODEL = 'opencode-go/deepseek-v4.1-flash';
 const DEEPSEEK_TIMEOUT_MS = 45000;
 const ACTION_CONFIDENCE_THRESHOLD = 0.5; // below this, per the Jev skill's confidence gating, don't trust the pick
 
+// Falls back to a local credentials file if present, but each browser can also supply
+// its own OpenRouter/OpenCode keys via the settings drawer (see /api/classify, /api/stream,
+// /api/race) so the demo works plug-and-play for anyone without server-side setup.
 const credPath = path.join(process.env.LOCALAPPDATA || os.homedir(), 'jev', 'credentials.json');
-if (!fs.existsSync(credPath)) {
-  throw new Error(`No OpenRouter key found at ${credPath}. Set up Jev credentials before running the demo.`);
-}
-const API_KEY = JSON.parse(fs.readFileSync(credPath, 'utf8')).openrouter_api_key;
+const DEFAULT_JEV_KEY = fs.existsSync(credPath)
+  ? JSON.parse(fs.readFileSync(credPath, 'utf8')).openrouter_api_key
+  : null;
 
 const DATA_DIR = path.join(__dirname, 'data');
 const dataPath = (key) => path.join(DATA_DIR, `${key}.json`);
@@ -116,12 +118,14 @@ function publicScenario(s) {
   };
 }
 
-async function classifyItem(text) {
+async function classifyItem(text, jevKey) {
+  const key = jevKey || DEFAULT_JEV_KEY;
+  if (!key) throw new Error('No OpenRouter API key. Enter one in Settings, or set up credentials.json on the server.');
   const start = Date.now();
   const res = await fetch('https://openrouter.ai/api/alpha/decisions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ model: '~typesafe/jev-latest', state: text, questions: QUESTIONS }),
@@ -139,7 +143,10 @@ async function classifyItem(text) {
 // the same classification task Jev just did, for the live speed-comparison race.
 // Must use `spawn` (not `execFile`) with stdin explicitly closed — otherwise the
 // CLI hangs indefinitely waiting on a TTY prompt that never arrives headlessly.
-function runDeepSeek(text, { reasoning, concise }, scenario) {
+// `dsKey`, if provided, overrides the OpenCode CLI's globally logged-in credentials for
+// just this one process via OPENCODE_API_KEY - the env var the OpenCode Go provider's own
+// catalog declares for auth, so per-request keys never touch the CLI's shared auth.json.
+function runDeepSeek(text, { reasoning, concise }, scenario, dsKey) {
   return new Promise((resolve) => {
     // Embedded newlines in a shell argument get mangled by cmd.exe's command-line
     // parsing on Windows, so the whole prompt (and the ticket text) must stay single-line.
@@ -152,7 +159,8 @@ function runDeepSeek(text, { reasoning, concise }, scenario) {
 
     const args = ['run', '--model', DEEPSEEK_MODEL, '--variant', reasoning ? 'high' : 'minimal', prompt];
     const start = Date.now();
-    const child = spawn('opencode', args, { shell: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    const env = dsKey ? { ...process.env, OPENCODE_API_KEY: dsKey } : process.env;
+    const child = spawn('opencode', args, { shell: true, stdio: ['ignore', 'pipe', 'pipe'], env });
 
     let out = '';
     let err = '';
@@ -187,6 +195,8 @@ function handleRace(req, res, url) {
   const text = (url.searchParams.get('text') || '').trim();
   const reasoning = url.searchParams.get('reasoning') === 'on';
   const concise = url.searchParams.get('concise') !== 'off';
+  const jevKey = url.searchParams.get('jevKey') || '';
+  const dsKey = url.searchParams.get('dsKey') || '';
 
   if (!text) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -202,13 +212,13 @@ function handleRace(req, res, url) {
   const send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   send('start', { text, reasoning, concise });
 
-  const jevDone = classifyItem(text)
+  const jevDone = classifyItem(text, jevKey)
     .then(({ latency_ms, data }) => {
       send('jev-done', { ...toResult({ id: `race-${Date.now()}`, text }, latency_ms, data), cost: estimateCost(data) });
     })
     .catch((err) => send('jev-done', { error: String(err.message || err) }));
 
-  const deepseekDone = runDeepSeek(text, { reasoning, concise }, scenario).then((result) => send('deepseek-done', result));
+  const deepseekDone = runDeepSeek(text, { reasoning, concise }, scenario, dsKey).then((result) => send('deepseek-done', result));
 
   Promise.all([jevDone, deepseekDone]).then(() => {
     send('race-done', {});
@@ -260,6 +270,8 @@ function handleBatchStream(req, res, url) {
   const raceSampleSize = Math.max(1, Math.min(50, parseInt(url.searchParams.get('raceSample'), 10) || DEEPSEEK_BATCH_SAMPLE_DEFAULT));
   const reasoning = url.searchParams.get('reasoning') === 'on';
   const concise = url.searchParams.get('concise') !== 'off';
+  const jevKey = url.searchParams.get('jevKey') || '';
+  const dsKey = url.searchParams.get('dsKey') || '';
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -282,7 +294,7 @@ function handleBatchStream(req, res, url) {
       const item = items[idx++];
       send('dispatch', { id: item.id, text: item.text });
       try {
-        const { latency_ms, data } = await classifyItem(item.text);
+        const { latency_ms, data } = await classifyItem(item.text, jevKey);
         costTotal += estimateCost(data);
         completed++;
         send('result', {
@@ -311,7 +323,7 @@ function handleBatchStream(req, res, url) {
     async function deepseekWorker() {
       while (!stopped && dsIdx < sample.length) {
         const item = sample[dsIdx++];
-        const result = await runDeepSeek(item.text, { reasoning, concise }, scenario);
+        const result = await runDeepSeek(item.text, { reasoning, concise }, scenario, dsKey);
         dsCompleted++;
         send('deepseek-item-done', { id: item.id, ...result, completed: dsCompleted, total: sample.length });
       }
@@ -343,7 +355,8 @@ function handleLiveClassify(req, res) {
         return;
       }
       const trimmed = text.trim();
-      const { latency_ms, data } = await classifyItem(trimmed);
+      const jevKey = req.headers['x-jev-key'] || '';
+      const { latency_ms, data } = await classifyItem(trimmed, jevKey);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(toResult({ id: `live-${Date.now()}`, text: trimmed }, latency_ms, data)));
     } catch (err) {

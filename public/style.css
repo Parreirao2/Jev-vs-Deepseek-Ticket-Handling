@@ -229,7 +229,8 @@ section > h2 {
 
 #live-form textarea,
 .add-action-form textarea,
-.add-action-form input {
+.add-action-form input,
+.api-key-form input {
   width: 100%;
   resize: vertical;
   background: var(--bg);
@@ -243,9 +244,33 @@ section > h2 {
 
 #live-form textarea:focus,
 .add-action-form textarea:focus,
-.add-action-form input:focus {
+.add-action-form input:focus,
+.api-key-form input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.api-key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.api-key-form label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.api-key-form label:first-child {
+  margin-top: 0;
+}
+
+.api-key-hint {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 .classify-controls {
