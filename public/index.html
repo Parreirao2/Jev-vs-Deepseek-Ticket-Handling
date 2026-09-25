@@ -76,6 +76,7 @@
           <span class="result-lane-name">Jev</span>
           <span class="result-lane-time" id="live-latency-value">--</span>
         </div>
+        <div class="lane-progress" id="live-jev-progress"><div class="lane-progress-fill"></div></div>
         <div class="live-badges">
           <span id="live-category" class="badge"></span>
           <div class="severity-bar"><div id="live-severity-fill" class="severity-fill"></div></div>
@@ -97,6 +98,7 @@
           <span class="result-lane-name">DeepSeek V4.1 Flash</span>
           <span class="result-lane-time" id="live-ds-time">--</span>
         </div>
+        <div class="lane-progress" id="live-ds-progress"><div class="lane-progress-fill"></div></div>
         <div class="live-badges">
           <span id="live-ds-category" class="badge" hidden></span>
           <span id="live-ds-agree" class="badge" hidden></span>
@@ -122,28 +124,69 @@
     <div class="race-options" id="batch-race-options" hidden>
       <label><input type="checkbox" id="batch-race-reasoning" /> extended reasoning</label>
       <label><input type="checkbox" id="batch-race-concise" checked /> concise answer only</label>
-      <span class="race-options-note">~18 tickets, several minutes</span>
     </div>
-    <div class="stats">
-      <div class="stat"><span class="stat-value" id="stat-processed">0/0</span><span class="stat-label">processed</span></div>
-      <div class="stat"><span class="stat-value" id="stat-elapsed">0.0s</span><span class="stat-label">elapsed</span></div>
-      <div class="stat"><span class="stat-value" id="stat-throughput">0.0/s</span><span class="stat-label">throughput</span></div>
-      <div class="stat"><span class="stat-value" id="stat-avg-latency">-- ms</span><span class="stat-label">avg latency</span></div>
-      <div class="stat"><span class="stat-value" id="stat-cost">$0.0000</span><span class="stat-label">est. cost</span></div>
-      <div class="stat"><span class="stat-value" id="stat-auto">0/0</span><span class="stat-label">auto-resolved</span></div>
-      <div class="stat" id="stat-ds-wrap" hidden><span class="stat-value" id="stat-ds-progress">0/0</span><span class="stat-label">DeepSeek race</span></div>
-      <div class="stat" id="stat-ds-agree-wrap" hidden><span class="stat-value" id="stat-ds-agreement">--</span><span class="stat-label">DeepSeek agreement</span></div>
+
+    <div class="race-chart-wrap" id="race-chart-wrap" hidden>
+      <canvas id="race-chart" width="760" height="180"></canvas>
+      <div class="race-chart-legend">
+        <span class="legend-item"><span class="legend-swatch legend-jev"></span>Jev · % of its batch done</span>
+        <span class="legend-item"><span class="legend-swatch legend-ds"></span>DeepSeek · % of its sample done</span>
+      </div>
     </div>
-    <div class="queue-panel">
-      <h3>Queue <span id="queue-count" class="inflight-count"></span></h3>
-      <div class="queue-list" id="queue"></div>
+
+    <div class="engine-tabs" id="engine-tabs" hidden>
+      <button type="button" class="engine-tab active" id="tab-btn-jev" data-tab="jev">
+        Jev <span class="tab-count" id="tab-jev-count"></span>
+      </button>
+      <button type="button" class="engine-tab" id="tab-btn-deepseek" data-tab="deepseek">
+        DeepSeek <span class="tab-count" id="tab-ds-count"></span>
+        <span class="tab-pulse" id="tab-ds-pulse" hidden></span>
+      </button>
     </div>
-    <div class="inflight-panel">
-      <h3>Classifying now <span id="inflight-count" class="inflight-count"></span></h3>
-      <div class="inflight-grid" id="inflight"></div>
+
+    <div class="engine-panel" id="jev-panel">
+      <div class="engine-progress" id="jev-progress" hidden><div class="engine-progress-fill"></div></div>
+      <div class="stats">
+        <div class="stat"><span class="stat-value" id="stat-processed">0/0</span><span class="stat-label">processed</span></div>
+        <div class="stat"><span class="stat-value" id="stat-elapsed">0.0s</span><span class="stat-label">elapsed</span></div>
+        <div class="stat"><span class="stat-value" id="stat-throughput">0.0/s</span><span class="stat-label">throughput</span></div>
+        <div class="stat"><span class="stat-value" id="stat-avg-latency">-- ms</span><span class="stat-label">avg latency</span></div>
+        <div class="stat"><span class="stat-value" id="stat-cost">$0.0000</span><span class="stat-label">est. cost</span></div>
+        <div class="stat"><span class="stat-value" id="stat-auto">0/0</span><span class="stat-label">auto-resolved</span></div>
+      </div>
+      <div class="queue-panel">
+        <h3>Queue <span id="queue-count" class="inflight-count"></span></h3>
+        <div class="queue-list" id="queue"></div>
+      </div>
+      <div class="inflight-panel">
+        <h3>Classifying now <span id="inflight-count" class="inflight-count"></span></h3>
+        <div class="inflight-grid" id="inflight"></div>
+      </div>
+      <div class="board" id="board"></div>
+      <div id="errors" class="errors" hidden></div>
     </div>
-    <div class="board" id="board"></div>
-    <div id="errors" class="errors" hidden></div>
+
+    <div class="engine-panel" id="deepseek-panel" hidden>
+      <div class="engine-progress" id="ds-progress" hidden><div class="engine-progress-fill"></div></div>
+      <div class="stats">
+        <div class="stat"><span class="stat-value" id="ds-stat-processed">0/0</span><span class="stat-label">processed</span></div>
+        <div class="stat"><span class="stat-value" id="ds-stat-elapsed">0.0s</span><span class="stat-label">elapsed</span></div>
+        <div class="stat"><span class="stat-value" id="ds-stat-throughput">0.0/s</span><span class="stat-label">throughput</span></div>
+        <div class="stat"><span class="stat-value" id="ds-stat-avg-latency">-- ms</span><span class="stat-label">avg latency</span></div>
+        <div class="stat" title="OpenCode's own computed cost for each run (from --format json), same as Jev's OpenRouter cost."><span class="stat-value" id="ds-stat-cost">$0.0000</span><span class="stat-label">est. cost</span></div>
+        <div class="stat" title="Proxy: DeepSeek's answer parsed into a known category (not Unclear/Error). DeepSeek isn't asked for confidence or an action here, so this isn't the same signal as Jev's auto-resolved."><span class="stat-value" id="ds-stat-auto">0/0</span><span class="stat-label">auto-resolved</span></div>
+        <div class="stat"><span class="stat-value" id="ds-stat-agreement">--</span><span class="stat-label">agreement vs Jev</span></div>
+      </div>
+      <div class="queue-panel">
+        <h3>Queue <span id="ds-queue-count" class="inflight-count"></span></h3>
+        <div class="queue-list" id="ds-queue"></div>
+      </div>
+      <div class="inflight-panel">
+        <h3>Classifying now <span id="ds-inflight-count" class="inflight-count"></span></h3>
+        <div class="inflight-grid" id="ds-inflight"></div>
+      </div>
+      <div class="board" id="ds-board"></div>
+    </div>
   </section>
 
   <div class="toast-stack" id="toast-stack"></div>

@@ -9,7 +9,7 @@ const { SCENARIOS, DEFAULT_SCENARIO } = require('./lib/scenarios');
 const PORT = process.env.PORT || 5173;
 const CONCURRENCY = 25;
 const DEEPSEEK_BATCH_CONCURRENCY = 4; // DeepSeek calls are heavy CLI spawns - keep this far below Jev's CONCURRENCY
-const DEEPSEEK_BATCH_SAMPLE_DEFAULT = 18;
+const DEEPSEEK_BATCH_SAMPLE_DEFAULT = 15; // 10% of the default 150-ticket batch
 const FALLBACK_COST_PER_CALL = 0.000034; // used only if the API response omits usage.cost
 const DEEPSEEK_MODEL = 'opencode-go/deepseek-v4.1-flash';
 const DEEPSEEK_TIMEOUT_MS = 45000;
@@ -146,6 +146,30 @@ async function classifyItem(text, jevKey) {
 // `dsKey`, if provided, overrides the OpenCode CLI's globally logged-in credentials for
 // just this one process via OPENCODE_API_KEY - the env var the OpenCode Go provider's own
 // catalog declares for auth, so per-request keys never touch the CLI's shared auth.json.
+const stripAnsi = (s) => s.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+
+// Parses the newline-delimited JSON events `opencode run --format json` streams
+// to stdout, pulling out the final answer text and the cost OpenCode itself
+// computed for the call (from its own pricing, in its `step_finish` event) -
+// so DeepSeek's cost is a real number, not a guess, same as Jev's OpenRouter cost.
+function parseOpencodeJsonOutput(out) {
+  let answer = '';
+  let cost = 0;
+  for (const line of out.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    let evt;
+    try {
+      evt = JSON.parse(trimmed);
+    } catch {
+      continue;
+    }
+    if (evt.type === 'text' && evt.part?.text) answer = evt.part.text;
+    if (evt.type === 'step_finish' && typeof evt.part?.cost === 'number') cost += evt.part.cost;
+  }
+  return { answer: answer.trim() || null, cost };
+}
+
 function runDeepSeek(text, { reasoning, concise }, scenario, dsKey) {
   return new Promise((resolve) => {
     // Embedded newlines in a shell argument get mangled by cmd.exe's command-line
@@ -157,7 +181,7 @@ function runDeepSeek(text, { reasoning, concise }, scenario, dsKey) {
       : 'Briefly explain your reasoning in one short sentence, then state just the category word at the end.';
     const prompt = `Classify the following ${scenario.itemNoun.singular} into exactly one of these categories: ${categoryList}. ${instruction} ${scenario.itemNoun.singular}: ${flatten(text)}`;
 
-    const args = ['run', '--model', DEEPSEEK_MODEL, '--variant', reasoning ? 'high' : 'minimal', prompt];
+    const args = ['run', '--model', DEEPSEEK_MODEL, '--variant', reasoning ? 'high' : 'minimal', '--format', 'json', prompt];
     const start = Date.now();
     const env = dsKey ? { ...process.env, OPENCODE_API_KEY: dsKey } : process.env;
     const child = spawn('opencode', args, { shell: true, stdio: ['ignore', 'pipe', 'pipe'], env });
@@ -177,11 +201,21 @@ function runDeepSeek(text, { reasoning, concise }, scenario, dsKey) {
           latency_ms,
           answer: null,
           timed_out: latency_ms >= DEEPSEEK_TIMEOUT_MS - 1000,
-          error: err.trim().slice(0, 300) || `exited with code ${code}`,
+          error: stripAnsi(err.trim()).slice(0, 300) || `exited with code ${code}`,
         });
         return;
       }
-      resolve({ latency_ms, answer: out.trim(), timed_out: false, error: null });
+      const { answer, cost } = parseOpencodeJsonOutput(out);
+      if (!answer) {
+        resolve({
+          latency_ms,
+          answer: null,
+          timed_out: false,
+          error: stripAnsi(err.trim()).slice(0, 300) || 'No answer text in CLI output',
+        });
+        return;
+      }
+      resolve({ latency_ms, answer, timed_out: false, error: null, cost });
     });
 
     child.on('error', (spawnErr) => {
@@ -323,6 +357,7 @@ function handleBatchStream(req, res, url) {
     async function deepseekWorker() {
       while (!stopped && dsIdx < sample.length) {
         const item = sample[dsIdx++];
+        send('deepseek-dispatch', { id: item.id, text: item.text });
         const result = await runDeepSeek(item.text, { reasoning, concise }, scenario, dsKey);
         dsCompleted++;
         send('deepseek-item-done', { id: item.id, ...result, completed: dsCompleted, total: sample.length });

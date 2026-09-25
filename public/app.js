@@ -341,11 +341,6 @@ function updateAutoStat() {
   statAuto.textContent = `${autoCount}/${autoTotal} (${pct}%)`;
 }
 
-function buildDsLine(id) {
-  const line = el('div', 'card-ds ds-pending', 'DeepSeek: racing...');
-  return line;
-}
-
 function appendCard(result) {
   const category = categoryByKey(result.category) ? result.category : SCENARIO.categories[0].key;
   const container = columnCardsByCategory[category];
@@ -380,8 +375,6 @@ function appendCard(result) {
   if (action === NO_ACTION) actionLine.classList.add('no-action');
   card.appendChild(actionLine);
 
-  if (raceSampleIds.has(result.id)) card.appendChild(buildDsLine(result.id));
-
   card.addEventListener('click', () => openDetailModal(result));
   container.prepend(card);
   columnCountByCategory[category].textContent = String(container.children.length);
@@ -394,21 +387,86 @@ function appendCard(result) {
   if (auto) autoCount += 1;
   updateAutoStat();
   maybeEscalate(result);
+  refreshDsAgreement(result.id);
 }
 
-function applyDeepseekToCard(id, dsResult) {
+// Records DeepSeek's answer for an item without touching Jev's card/board -
+// Jev and DeepSeek results are shown in fully separate boards/lanes (see the
+// engine tabs) and only meet again in the detail modal's side-by-side compare.
+function storeDeepseekResult(id, dsResult) {
   deepseekResultsById.set(id, dsResult);
-  const card = cardsById.get(id);
-  if (!card) return;
-  let dsLine = card.querySelector('.card-ds');
-  if (!dsLine) {
-    dsLine = el('div', 'card-ds');
-    card.appendChild(dsLine);
+}
+
+// ---- DeepSeek's own board (separate from Jev's; only holds its race sample) ----
+
+const dsBoard = document.getElementById('ds-board');
+const dsColumnCardsByCategory = {};
+const dsColumnCountByCategory = {};
+const dsCardsById = new Map(); // item id -> {card, agreeTag}
+
+function buildDsBoard(categories) {
+  dsBoard.replaceChildren();
+  for (const key of Object.keys(dsColumnCardsByCategory)) delete dsColumnCardsByCategory[key];
+  for (const key of Object.keys(dsColumnCountByCategory)) delete dsColumnCountByCategory[key];
+  dsCardsById.clear();
+
+  const cols = [...categories, { key: 'unclear', label: 'Unclear / error', color: '#8b93a7' }];
+  for (const cat of cols) {
+    const col = el('div', 'column');
+    col.style.setProperty('--category-color', cat.color);
+
+    const header = el('div', 'column-header');
+    const top = el('div', 'column-header-top');
+    top.append(el('span', 'column-title', cat.label), el('span', 'column-count', '0'));
+    header.append(top);
+
+    const cards = el('div', 'column-cards');
+    col.append(header, cards);
+    dsBoard.appendChild(col);
+    dsColumnCardsByCategory[cat.key] = cards;
+    dsColumnCountByCategory[cat.key] = top.lastChild;
   }
+}
+
+function appendDsCard(item, dsResult) {
+  const ok = !dsResult.timed_out && !dsResult.error;
+  const cat = ok ? parseDeepseekCategory(dsResult.answer) : null;
+  const catKey = cat ? cat.key : 'unclear';
+  const container = dsColumnCardsByCategory[catKey] || dsColumnCardsByCategory.unclear;
+  if (!container || !item) return;
+
+  const card = el('div', 'card');
+  card.append(el('div', 'card-text', item.text));
+
+  const meta = el('div', 'card-meta');
+  meta.appendChild(el('span', 'latency-badge', `${Math.round(dsResult.latency_ms)}ms`));
+  card.appendChild(meta);
+
+  card.appendChild(el('div', 'card-action', formatDeepseekAnswer(dsResult)));
+
+  const agreeTag = el('span', 'badge', '');
+  agreeTag.hidden = true;
+  card.appendChild(agreeTag);
+
+  card.addEventListener('click', () => openDetailModal(resultsById.get(item.id) || item));
+  container.prepend(card);
+  dsColumnCountByCategory[catKey].textContent = String(container.children.length);
+  dsCardsById.set(item.id, { card, agreeTag });
+
+  refreshDsAgreement(item.id);
+}
+
+// Whichever of Jev/DeepSeek finishes an item last, check if the other side
+// already has a result too and paint the "agrees/disagrees" tag on DeepSeek's
+// own card then - the two boards fill independently and in any order.
+function refreshDsAgreement(id) {
+  const entry = dsCardsById.get(id);
+  if (!entry) return;
   const jevResult = resultsById.get(id);
-  const agree = jevResult && !dsResult.timed_out && !dsResult.error && deepseekAgrees(dsResult.answer, jevResult.category);
-  dsLine.className = `card-ds ${dsResult.timed_out || dsResult.error ? '' : agree ? 'ds-agree' : 'ds-disagree'}`;
-  dsLine.textContent = `DeepSeek: ${formatDeepseekAnswer(dsResult)} (${Math.round(dsResult.latency_ms)}ms)`;
+  const dsResult = deepseekResultsById.get(id);
+  if (!jevResult || !dsResult) return;
+  if (dsResult.timed_out || dsResult.error) return;
+  paintAgreeBadge(entry.agreeTag, deepseekAgrees(dsResult.answer, jevResult.category));
 }
 
 // ---- Queue ----
@@ -480,6 +538,73 @@ function clearAllInflight() {
   inflightCount.textContent = '';
 }
 
+// ---- DeepSeek's own queue + in-flight tray (mirrors Jev's above, own sample only) ----
+
+const dsQueueList = document.getElementById('ds-queue');
+const dsQueueCount = document.getElementById('ds-queue-count');
+const dsQueueItems = new Map();
+
+function updateDsQueueCount() {
+  dsQueueCount.textContent = dsQueueItems.size ? `(${dsQueueItems.size})` : '';
+}
+
+function renderDsQueue(items) {
+  dsQueueItems.clear();
+  dsQueueList.replaceChildren();
+  for (const item of items) {
+    const node = el('div', 'queue-item', `#${item.id} ${item.text}`);
+    node.addEventListener('click', () => openDetailModal(item));
+    dsQueueList.appendChild(node);
+    dsQueueItems.set(item.id, node);
+  }
+  updateDsQueueCount();
+}
+
+function removeFromDsQueue(id) {
+  const node = dsQueueItems.get(id);
+  if (!node) return;
+  node.remove();
+  dsQueueItems.delete(id);
+  updateDsQueueCount();
+}
+
+const dsInflightGrid = document.getElementById('ds-inflight');
+const dsInflightCount = document.getElementById('ds-inflight-count');
+const dsInflightCards = new Map();
+
+function addDsInflight(item) {
+  const card = el('div', 'inflight-card');
+  const text = el('div', 'inflight-text', item.text);
+  const timer = el('div', 'inflight-timer', '0ms');
+  card.append(text, timer);
+  card.addEventListener('click', () => openDetailModal(item));
+  dsInflightGrid.appendChild(card);
+
+  const startedAt = performance.now();
+  const intervalId = setInterval(() => {
+    timer.textContent = `${Math.round(performance.now() - startedAt)}ms`;
+  }, 60);
+
+  dsInflightCards.set(item.id, { node: card, intervalId });
+  dsInflightCount.textContent = `(${dsInflightCards.size})`;
+}
+
+function removeDsInflight(id) {
+  const entry = dsInflightCards.get(id);
+  if (!entry) return;
+  clearInterval(entry.intervalId);
+  entry.node.remove();
+  dsInflightCards.delete(id);
+  dsInflightCount.textContent = dsInflightCards.size ? `(${dsInflightCards.size})` : '';
+}
+
+function clearAllDsInflight() {
+  for (const entry of dsInflightCards.values()) clearInterval(entry.intervalId);
+  dsInflightCards.clear();
+  dsInflightGrid.replaceChildren();
+  dsInflightCount.textContent = '';
+}
+
 // ---- Stats ----
 
 const statProcessed = document.getElementById('stat-processed');
@@ -487,10 +612,6 @@ const statElapsed = document.getElementById('stat-elapsed');
 const statThroughput = document.getElementById('stat-throughput');
 const statAvgLatency = document.getElementById('stat-avg-latency');
 const statCost = document.getElementById('stat-cost');
-const statDsWrap = document.getElementById('stat-ds-wrap');
-const statDsProgress = document.getElementById('stat-ds-progress');
-const statDsAgreeWrap = document.getElementById('stat-ds-agree-wrap');
-const statDsAgreement = document.getElementById('stat-ds-agreement');
 const startBtn = document.getElementById('start-btn');
 const newBatchBtn = document.getElementById('new-batch-btn');
 const batchRaceToggle = document.getElementById('batch-race-toggle');
@@ -499,20 +620,130 @@ const batchRaceReasoning = document.getElementById('batch-race-reasoning');
 const batchRaceConcise = document.getElementById('batch-race-concise');
 const errorsBox = document.getElementById('errors');
 
+// Engine tabs (Jev / DeepSeek) - only shown while racing, so each engine gets
+// its own board and its own metrics instead of DeepSeek's answers being
+// squeezed into Jev's cards.
+const engineTabs = document.getElementById('engine-tabs');
+const tabBtnJev = document.getElementById('tab-btn-jev');
+const tabBtnDeepseek = document.getElementById('tab-btn-deepseek');
+const tabJevCount = document.getElementById('tab-jev-count');
+const tabDsCount = document.getElementById('tab-ds-count');
+const tabDsPulse = document.getElementById('tab-ds-pulse');
+const jevPanel = document.getElementById('jev-panel');
+const deepseekPanel = document.getElementById('deepseek-panel');
+const jevProgress = document.getElementById('jev-progress');
+const dsProgress = document.getElementById('ds-progress');
+const dsStatProcessed = document.getElementById('ds-stat-processed');
+const dsStatElapsed = document.getElementById('ds-stat-elapsed');
+const dsStatThroughput = document.getElementById('ds-stat-throughput');
+const dsStatAvgLatency = document.getElementById('ds-stat-avg-latency');
+const dsStatCost = document.getElementById('ds-stat-cost');
+const dsStatAuto = document.getElementById('ds-stat-auto');
+const dsStatAgreement = document.getElementById('ds-stat-agreement');
+
+function setActiveTab(tab) {
+  const jev = tab === 'jev';
+  tabBtnJev.classList.toggle('active', jev);
+  tabBtnDeepseek.classList.toggle('active', !jev);
+  jevPanel.hidden = !jev;
+  deepseekPanel.hidden = jev;
+}
+tabBtnJev.addEventListener('click', () => setActiveTab('jev'));
+tabBtnDeepseek.addEventListener('click', () => setActiveTab('deepseek'));
+
+// ---- Race chart (Jev % done vs DeepSeek % done, over elapsed time) ----
+
+const raceChartWrap = document.getElementById('race-chart-wrap');
+const raceChartCanvas = document.getElementById('race-chart');
+const raceChartCtx = raceChartCanvas.getContext('2d');
+let raceChartStartedAt = 0;
+let jevChartPoints = [];
+let dsChartPoints = [];
+
+function resetRaceChart() {
+  raceChartStartedAt = performance.now();
+  jevChartPoints = [[0, 0]];
+  dsChartPoints = [[0, 0]];
+  drawRaceChart();
+}
+
+function pushChartPoint(series, pct) {
+  series.push([(performance.now() - raceChartStartedAt) / 1000, pct]);
+  drawRaceChart();
+}
+
+function drawRaceChart() {
+  const w = raceChartCanvas.width;
+  const h = raceChartCanvas.height;
+  const ctx = raceChartCtx;
+  ctx.clearRect(0, 0, w, h);
+
+  const pad = 28;
+  const maxT = Math.max(1, jevChartPoints.at(-1)[0], dsChartPoints.at(-1)[0]) * 1.05;
+  const sx = (t) => pad + (t / maxT) * (w - pad * 1.5);
+  const sy = (pct) => h - pad - (pct / 100) * (h - pad * 1.5);
+
+  ctx.strokeStyle = 'rgba(139,147,167,0.15)';
+  ctx.fillStyle = 'rgba(139,147,167,0.6)';
+  ctx.font = '10px sans-serif';
+  ctx.lineWidth = 1;
+  for (const pct of [0, 25, 50, 75, 100]) {
+    const y = sy(pct);
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(w - pad * 0.5, y);
+    ctx.stroke();
+    ctx.fillText(`${pct}%`, 2, y + 3);
+  }
+
+  function drawSeries(points, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach(([t, pct], i) => {
+      const x = sx(t);
+      const y = sy(pct);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    const [lastT, lastPct] = points.at(-1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(sx(lastT), sy(lastPct), 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawSeries(jevChartPoints, '#5eead4');
+  drawSeries(dsChartPoints, '#c084fc');
+}
+
 let latencySum = 0;
 let latencyCount = 0;
 let dsSampleTotal = 0;
 let dsSampleCompleted = 0;
 let dsAgreeCount = 0;
+let dsLatencySum = 0;
+let dsLatencyCount = 0;
+let dsCostSum = 0;
+let dsAutoCount = 0; // "auto-resolved" proxy: answer parsed into a known category (see tile tooltip)
 
 batchRaceToggle.addEventListener('change', () => {
   batchRaceOptions.hidden = !batchRaceToggle.checked;
 });
 
 function updateDsStats() {
-  statDsProgress.textContent = `${dsSampleCompleted}/${dsSampleTotal}`;
+  dsStatProcessed.textContent = `${dsSampleCompleted}/${dsSampleTotal}`;
+  const elapsedS = (performance.now() - raceChartStartedAt) / 1000;
+  dsStatElapsed.textContent = `${elapsedS.toFixed(1)}s`;
+  dsStatThroughput.textContent = `${(dsSampleCompleted / Math.max(elapsedS, 0.001)).toFixed(1)}/s`;
+  dsStatAvgLatency.textContent = dsLatencyCount ? `${Math.round(dsLatencySum / dsLatencyCount)} ms` : '-- ms';
+  dsStatCost.textContent = `$${dsCostSum.toFixed(4)}`;
+  dsStatAuto.textContent = `${dsAutoCount}/${dsSampleCompleted}`;
   const pct = dsSampleCompleted ? Math.round((dsAgreeCount / dsSampleCompleted) * 100) : 0;
-  statDsAgreement.textContent = dsSampleCompleted ? `${pct}%` : '--';
+  dsStatAgreement.textContent = dsSampleCompleted ? `${pct}%` : '--';
+  tabDsCount.textContent = `${dsSampleCompleted}/${dsSampleTotal}`;
+  tabDsPulse.hidden = dsSampleTotal === 0 || dsSampleCompleted >= dsSampleTotal;
 }
 
 function resetBoard() {
@@ -522,10 +753,13 @@ function resetBoard() {
     columnWorkloadByCategory[cat.key].textContent = '';
     agentCountsByCategory[cat.key] = new Map();
   }
+  buildDsBoard(SCENARIO.categories);
   errorsBox.hidden = true;
   errorsBox.replaceChildren();
   clearAllInflight();
+  clearAllDsInflight();
   renderQueue(ALL_ITEMS);
+  renderDsQueue([]);
   cardsById.clear();
   resultsById.clear();
   deepseekResultsById.clear();
@@ -537,17 +771,29 @@ function resetBoard() {
   dsSampleTotal = 0;
   dsSampleCompleted = 0;
   dsAgreeCount = 0;
-  statProcessed.textContent = '0/0';
+  dsLatencySum = 0;
+  dsLatencyCount = 0;
+  dsCostSum = 0;
+  dsAutoCount = 0;
+  statProcessed.textContent = `0/${ALL_ITEMS.length}`;
   statElapsed.textContent = '0.0s';
   statThroughput.textContent = '0.0/s';
   statAvgLatency.textContent = '-- ms';
   statCost.textContent = '$0.0000';
+  tabJevCount.textContent = `0/${ALL_ITEMS.length}`;
+  tabDsCount.textContent = '';
+  tabDsPulse.hidden = true;
+  jevProgress.hidden = true;
+  dsProgress.hidden = true;
   updateAutoStat();
   updateDsStats();
+  resetRaceChart();
 }
 
 function updateStats(msg) {
   statProcessed.textContent = `${msg.completed}/${msg.total}`;
+  tabJevCount.textContent = `${msg.completed}/${msg.total}`;
+  jevProgress.hidden = msg.completed >= msg.total;
   const elapsedS = msg.elapsed_ms / 1000;
   statElapsed.textContent = `${elapsedS.toFixed(1)}s`;
   statThroughput.textContent = `${(msg.completed / Math.max(elapsedS, 0.001)).toFixed(1)}/s`;
@@ -559,13 +805,18 @@ function updateStats(msg) {
   if (typeof msg.cost_estimate_running === 'number') {
     statCost.textContent = `$${msg.cost_estimate_running.toFixed(4)}`;
   }
+  pushChartPoint(jevChartPoints, (msg.completed / msg.total) * 100);
 }
 
 startBtn.addEventListener('click', () => {
   resetBoard();
   const racing = batchRaceToggle.checked;
-  statDsWrap.hidden = !racing;
-  statDsAgreeWrap.hidden = !racing;
+  engineTabs.hidden = !racing;
+  raceChartWrap.hidden = !racing;
+  jevPanel.classList.toggle('tabbed', racing);
+  deepseekPanel.classList.toggle('tabbed', racing);
+  setActiveTab('jev');
+  if (racing) jevProgress.hidden = false;
 
   startBtn.disabled = true;
   newBatchBtn.disabled = true;
@@ -601,16 +852,35 @@ startBtn.addEventListener('click', () => {
     const msg = JSON.parse(e.data);
     raceSampleIds = new Set(msg.ids);
     dsSampleTotal = msg.total;
+    dsProgress.hidden = false;
+    const sampleItems = msg.ids.map((id) => ALL_ITEMS.find((i) => i.id === id)).filter(Boolean);
+    renderDsQueue(sampleItems);
     updateDsStats();
+  });
+
+  source.addEventListener('deepseek-dispatch', (e) => {
+    const item = JSON.parse(e.data);
+    removeFromDsQueue(item.id);
+    addDsInflight(item);
   });
 
   source.addEventListener('deepseek-item-done', (e) => {
     const msg = JSON.parse(e.data);
+    removeDsInflight(msg.id);
     dsSampleCompleted = msg.completed;
     const jevResult = resultsById.get(msg.id);
-    if (jevResult && !msg.timed_out && !msg.error && deepseekAgrees(msg.answer, jevResult.category)) dsAgreeCount++;
+    const ok = !msg.timed_out && !msg.error;
+    if (ok) {
+      dsLatencySum += msg.latency_ms;
+      dsLatencyCount += 1;
+      if (typeof msg.cost === 'number') dsCostSum += msg.cost;
+      if (parseDeepseekCategory(msg.answer)) dsAutoCount++;
+    }
+    if (jevResult && ok && deepseekAgrees(msg.answer, jevResult.category)) dsAgreeCount++;
     updateDsStats();
-    applyDeepseekToCard(msg.id, msg);
+    storeDeepseekResult(msg.id, msg);
+    appendDsCard(ALL_ITEMS.find((i) => i.id === msg.id), msg);
+    pushChartPoint(dsChartPoints, (msg.completed / msg.total) * 100);
   });
 
   source.addEventListener('error', (e) => {
@@ -625,6 +895,10 @@ startBtn.addEventListener('click', () => {
     const msg = JSON.parse(e.data);
     statCost.textContent = `$${msg.cost_estimate.toFixed(4)}`;
     clearAllInflight();
+    clearAllDsInflight();
+    jevProgress.hidden = true;
+    dsProgress.hidden = true;
+    tabDsPulse.hidden = true;
     startBtn.disabled = false;
     newBatchBtn.disabled = false;
     batchRaceToggle.disabled = false;
@@ -636,6 +910,10 @@ startBtn.addEventListener('click', () => {
   source.onerror = () => {
     if (source.readyState === EventSource.CLOSED) {
       clearAllInflight();
+      clearAllDsInflight();
+      jevProgress.hidden = true;
+      dsProgress.hidden = true;
+      tabDsPulse.hidden = true;
       startBtn.disabled = false;
       newBatchBtn.disabled = false;
       batchRaceToggle.disabled = false;
@@ -695,6 +973,7 @@ async function switchScenario(key) {
   renderScenarioSwitcher();
 
   buildBoard(SCENARIO.categories);
+  buildDsBoard(SCENARIO.categories);
   await Promise.all([loadItems(), loadActions()]);
   resetBoard();
   setScenarioSwitcherEnabled(true);
@@ -943,7 +1222,7 @@ liveForm.addEventListener('submit', async (e) => {
       paintAgreeBadge(liveDsAgree, deepseekAgrees(result.answer, liveJevResult.category));
       liveDsSpeedTag.textContent = speedupLabel(liveJevResult.latency_ms, result.latency_ms);
       liveDsStats.hidden = false;
-      if (liveJevResult.id) applyDeepseekToCard(liveJevResult.id, result);
+      if (liveJevResult.id) storeDeepseekResult(liveJevResult.id, result);
     } else {
       liveDsAgree.hidden = true;
       liveDsStats.hidden = true;
@@ -979,10 +1258,11 @@ liveForm.addEventListener('submit', async (e) => {
   liveInput.placeholder = SCENARIO.inputPlaceholder;
   renderScenarioSwitcher();
   buildBoard(SCENARIO.categories);
+  buildDsBoard(SCENARIO.categories);
 
   await Promise.all([loadItems(), loadActions()]);
   renderQueue(ALL_ITEMS);
   statProcessed.textContent = `0/${ALL_ITEMS.length}`;
+  tabJevCount.textContent = `0/${ALL_ITEMS.length}`;
   updateAutoStat();
-  updateDsStats();
 })();

@@ -219,12 +219,6 @@ section > h2 {
   cursor: pointer;
 }
 
-.race-options-note {
-  color: var(--text-dim);
-  font-size: 0.75rem;
-  font-style: italic;
-}
-
 /* ---- Classify panel (unified live + race) ---- */
 
 #live-form textarea,
@@ -327,6 +321,39 @@ section > h2 {
 @keyframes pulse-text {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* ---- Indeterminate progress bars (loading feedback while a model is still working) ---- */
+
+.lane-progress,
+.engine-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--panel-border);
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.lane-progress {
+  display: none;
+}
+
+.result-lane.pending .lane-progress {
+  display: block;
+}
+
+.lane-progress-fill,
+.engine-progress-fill {
+  height: 100%;
+  width: 40%;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: progress-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
 }
 
 .result-lane-header {
@@ -628,6 +655,104 @@ section > h2 {
   grid-template-columns: repeat(5, 1fr);
   gap: 14px;
   margin-top: 18px;
+}
+
+#ds-board.board {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+/* ---- Race chart (Jev vs DeepSeek, % of each one's own batch completed over time) ---- */
+
+.race-chart-wrap {
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+}
+
+#race-chart {
+  display: block;
+  width: 100%;
+  height: 180px;
+}
+
+.race-chart-legend {
+  display: flex;
+  gap: 20px;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legend-jev {
+  background: var(--accent);
+}
+
+.legend-ds {
+  background: #c084fc;
+}
+
+/* ---- Engine tabs (Jev / DeepSeek), shown only while racing ---- */
+
+.engine-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.engine-tab {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  border-radius: 8px 8px 0 0;
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.engine-tab.active {
+  color: var(--text);
+  border-color: var(--accent);
+  border-bottom-color: transparent;
+}
+
+.tab-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.tab-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-text 1s ease-in-out infinite;
+}
+
+.engine-panel.tabbed {
+  border: 1px solid var(--panel-border);
+  border-top: none;
+  border-radius: 0 8px 8px 8px;
+  padding: 16px;
 }
 
 .column {
